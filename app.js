@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const packageInfo = require('./package.json');
-core.info(`Starting ${packageInfo.name}`);
+console.log(`Starting ${packageInfo.name}`);
 
 const helpers = require('./helpers');
 const uniq = require('lodash.uniq');
@@ -9,7 +9,6 @@ const uniq = require('lodash.uniq');
 //require octokit rest.js
 //more info at https://github.com/octokit/rest.js
 const github = require('@actions/github');
-const core = require('@actions/core');
 const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 
 let baseDirectories = '';
@@ -36,8 +35,8 @@ async function prMonorepoRepoLabeler() {
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber);
 
       //get list of labels currently on PR
-      const existingLabels = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
-      core.debug('existing labels', exitingLabels);
+      let existingLabels = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
+      core.debug('existing labels', existingLabels);
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
@@ -45,22 +44,26 @@ async function prMonorepoRepoLabeler() {
       //reduce to unique repos
       const prFilesReposUnique = uniq(prFilesRepos);
 
-      //remove unaffected repos, and add label for each monorepo repo
-      //add label for each monorepo repo
-      existingLabels.forEach((label) => {
-        if (prFilesReposUnique.indexOf(label.name) > -1) {
-          const repoLabel = helpers.getLabel(repo);
-          core.info(`labeling repo: ${repoLabel}`);
-
-          helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel);
-        } else {
-          core.info(`removing label ${label.name}`);
-          helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
+      //add label for each monorepo repo, and remove from existing labels array any labels that were used
+      for (const repo of prFilesReposUnique) {
+        const repoLabel = helpers.getLabel(repo);
+        const labelIndex = existingLabels.indexOf(repoLabel);
+        if (labelIndex > -1) {
+          existingLabels.splice(labelIndex, 1);
         }
-      });
+        console.log(`labeling repo: ${repoLabel}`);
+        helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel);
+      }
+
+      // remove all labels left in existing labels that aren't being used anymore
+      for (const label of existingLabels) {
+        console.log(`removing label ${label.name}`);
+        await helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
+      }
+
     }
   } catch (error) {
-    core.setFailed(error);
+    console.error(error);
   }
 }
 
