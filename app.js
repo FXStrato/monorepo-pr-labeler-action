@@ -9,7 +9,7 @@ const uniq = require('lodash.uniq');
 //require octokit rest.js
 //more info at https://github.com/octokit/rest.js
 const github = require('@actions/github');
-const core = requie('@actions/core');
+const core = require('@actions/core');
 const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 
 let baseDirectories = '';
