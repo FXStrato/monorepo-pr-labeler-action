@@ -74,3 +74,20 @@ module.exports.getLabel = function (repo) {
 
   return label
 }
+
+module.exports.listLabelsOnIssue = async function (octokit, eventOwner, eventRepo, eventIssueNumber) {
+  return await octokit.rest.issues.listLabelsOnIssue({
+    owner: eventOwner,
+    repo: eventRepo,
+    issue_number: eventIssueNumber
+  })
+}
+
+module.exports.removeLabel = async function (octokit, eventOwner, eventRepo, eventIssueNumber, label) {
+  return await octokit.rest.issues.removeLabel({
+    name: label,
+    owner: eventOwner,
+    repo: eventRepo,
+    issue_number: eventIssueNumber
+  })
+}

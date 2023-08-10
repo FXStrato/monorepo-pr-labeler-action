@@ -34,19 +34,25 @@ async function prMonorepoRepoLabeler() {
       //get list of files in PR
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber)
 
+      // get list of labels currently on PR
+      const existingLabels = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber)
+
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename))
 
       //reduce to unique repos
       const prFilesReposUnique = uniq(prFilesRepos)
 
+      // remove unaffected repos, and add label for each monorepo repo
       //add label for each monorepo repo
-      prFilesReposUnique.forEach((repo) => {
-        if (repo) {
+      existingLabels.forEach(async (label) => {
+        if (prFilesReposUnique.indexOf(label.name) > -1) {
           const repoLabel = helpers.getLabel(repo)
           console.log(`labeling repo: ${repoLabel}`)
 
           helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel)
+        } else {
+          await helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name)
         }
       })
     }
