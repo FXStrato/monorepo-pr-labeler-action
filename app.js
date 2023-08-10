@@ -35,8 +35,8 @@ async function prMonorepoRepoLabeler() {
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber);
 
       //get list of labels currently on PR
-      let existingLabels = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
-      console.log(`🚀 ~ file: app.js:39 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels)
+      let { data: existingLabels } = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
+      console.log(`🚀 ~ file: app.js:39 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels);
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
@@ -60,7 +60,6 @@ async function prMonorepoRepoLabeler() {
         console.log(`removing label ${label.name}`);
         await helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
       }
-
     }
   } catch (error) {
     console.error(error);
