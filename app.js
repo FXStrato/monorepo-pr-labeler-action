@@ -36,6 +36,7 @@ async function prMonorepoRepoLabeler() {
 
       //get list of labels currently on PR
       let existingLabels = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
+      console.log(`🚀 ~ file: app.js:39 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels)
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
