@@ -35,7 +35,12 @@ async function prMonorepoRepoLabeler() {
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber);
 
       //get list of labels currently on PR
-      let { data: existingLabels } = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
+      const { data: existingLabels } = await helpers.listLabelsOnIssue(
+        octokit,
+        eventOwner,
+        eventRepo,
+        eventIssueNumber
+      );
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
@@ -43,14 +48,27 @@ async function prMonorepoRepoLabeler() {
       //reduce to unique repos
       const prFilesReposUnique = uniq(prFilesRepos).map((repo) => helpers.getLabel(repo));
 
-      // add label if PR does not contain it, and remove labels for unaffected repos
-      for (const label of existingLabels) {
-        const labelIndex = prFilesReposUnique.indexOf(label.name);
+      /**
+       * Things to check
+       * if label in unique array exists in existing, splice out from existing labels array
+       * if label in unique array does not exist in existing, addLabel to PR
+       *
+       */
+      for (const repoLabel of prFilesReposUnique) {
+        const labelIndex = existingLabels.indexOf(repoLabel);
         if (labelIndex > -1) {
-          const repoLabel = prFilesReposUnique[labelIndex];
+          existingLabels.splice(labelIndex, 1);
+        } else {
           console.log(`labeling repo: ${repoLabel}`);
           helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel);
-        } else {
+        }
+      }
+
+      /**
+       * If existing labels array has anything left, means those are labels that were previously added that can be removed now.
+       */
+      if (existingLabels.length > 0) {
+        for (const label of existingLabels) {
           console.log(`removing label ${label.name}`);
           helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
         }
