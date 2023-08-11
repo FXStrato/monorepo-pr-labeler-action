@@ -53,7 +53,7 @@ async function prMonorepoRepoLabeler() {
        *
        */
       for (const repoLabel of prFilesReposUnique) {
-        const labelIndex = existingLabels.some((existing) => existing.name === repoLabel);
+        const labelIndex = existingLabels.findIndex((existing) => existing.name === repoLabel);
         if (labelIndex > -1) {
           existingLabels.splice(labelIndex, 1);
         } else {
