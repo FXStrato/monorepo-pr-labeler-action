@@ -36,29 +36,24 @@ async function prMonorepoRepoLabeler() {
 
       //get list of labels currently on PR
       let { data: existingLabels } = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
-      console.log(`🚀 ~ file: app.js:39 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels);
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
 
       //reduce to unique repos
-      const prFilesReposUnique = uniq(prFilesRepos);
+      const prFilesReposUnique = uniq(prFilesRepos).map((repo) => helpers.getLabel(repo));
 
-      //add label for each monorepo repo, and remove from existing labels array any labels that were used
-      for (const repo of prFilesReposUnique) {
-        const repoLabel = helpers.getLabel(repo);
-        const labelIndex = existingLabels.indexOf(repoLabel);
-        if (labelIndex > -1) {
-          existingLabels.splice(labelIndex, 1);
-        }
-        console.log(`labeling repo: ${repoLabel}`);
-        helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel);
-      }
-
-      // remove all labels left in existing labels that aren't being used anymore
+      // add label if PR does not contain it, and remove labels for unaffected repos
       for (const label of existingLabels) {
-        console.log(`removing label ${label.name}`);
-        await helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
+        const labelIndex = prFilesReposUnique.indexOf(label.name);
+        if (labelIndex > -1) {
+          const repoLabel = prFilesReposUnique[labelIndex];
+          console.log(`labeling repo: ${repoLabel}`);
+          helpers.addLabel(octokit, eventOwner, eventRepo, eventIssueNumber, repoLabel);
+        } else {
+          console.log(`removing label ${label.name}`);
+          helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
+        }
       }
     }
   } catch (error) {

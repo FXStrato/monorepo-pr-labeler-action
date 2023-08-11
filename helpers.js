@@ -86,8 +86,8 @@ module.exports.listLabelsOnIssue = async function (octokit, eventOwner, eventRep
     .catch((err) => console.log(err));
 };
 
-module.exports.removeLabel = async function (octokit, eventOwner, eventRepo, eventIssueNumber, label) {
-  return await octokit.rest.issues.removeLabel({
+module.exports.removeLabel = function (octokit, eventOwner, eventRepo, eventIssueNumber, label) {
+  octokit.rest.issues.removeLabel({
     name: label,
     owner: eventOwner,
     repo: eventRepo,
