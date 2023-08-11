@@ -35,18 +35,19 @@ async function prMonorepoRepoLabeler() {
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber);
 
       //get list of labels currently on PR
-      const { data: existingLabels } = await helpers.listLabelsOnIssue(
+      let { data: existingLabels } = await helpers.listLabelsOnIssue(
         octokit,
         eventOwner,
         eventRepo,
         eventIssueNumber
       );
+      console.log(`🚀 ~ file: app.js:44 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels)
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
 
       //reduce to unique repos
-      const prFilesReposUnique = uniq(prFilesRepos).map((repo) => helpers.getLabel(repo));
+      const prFilesReposUnique = uniq(prFilesRepos).map((repo) => helpers.getLabel(repo)).filter(Boolean);
 
       /**
        * Things to check
