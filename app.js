@@ -35,19 +35,16 @@ async function prMonorepoRepoLabeler() {
       const prFiles = await helpers.listFiles(octokit, eventOwner, eventRepo, eventIssueNumber);
 
       //get list of labels currently on PR
-      let { data: existingLabels } = await helpers.listLabelsOnIssue(
-        octokit,
-        eventOwner,
-        eventRepo,
-        eventIssueNumber
-      );
-      console.log(`🚀 ~ file: app.js:44 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels)
+      let { data: existingLabels } = await helpers.listLabelsOnIssue(octokit, eventOwner, eventRepo, eventIssueNumber);
+      console.log(`🚀 ~ file: app.js:44 ~ prMonorepoRepoLabeler ~ existingLabels:`, existingLabels);
 
       //get monorepo repo for each file
       prFilesRepos = prFiles.map(({ filename }) => helpers.getMonorepo(baseDirectories, filename));
 
       //reduce to unique repos
-      const prFilesReposUnique = uniq(prFilesRepos).map((repo) => helpers.getLabel(repo)).filter(Boolean);
+      const prFilesReposUnique = uniq(prFilesRepos)
+        .map((repo) => helpers.getLabel(repo))
+        .filter(Boolean);
 
       /**
        * Things to check
@@ -56,7 +53,7 @@ async function prMonorepoRepoLabeler() {
        *
        */
       for (const repoLabel of prFilesReposUnique) {
-        const labelIndex = existingLabels.indexOf(repoLabel);
+        const labelIndex = existingLabels.some((existing) => existing.name === repoLabel);
         if (labelIndex > -1) {
           existingLabels.splice(labelIndex, 1);
         } else {
