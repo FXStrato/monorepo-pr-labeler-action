@@ -67,7 +67,7 @@ async function prMonorepoRepoLabeler() {
       if (existingLabels.length > 0) {
         for (const label of existingLabels) {
           // Don't remove the ephemeral label if it was included manually, as it is used for triggering ephemeral deploys
-          if(label !== 'ephemeral') {
+          if(label.name !== 'ephemeral') {
             console.log(`removing label ${label.name}`);
           helpers.removeLabel(octokit, eventOwner, eventRepo, eventIssueNumber, label.name);
           }
